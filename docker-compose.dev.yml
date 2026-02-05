@@ -1,0 +1,37 @@
+# Development overrides for docker-compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  nginx:
+    ports:
+      - "80:80"
+
+  frontend:
+    build:
+      context: ./tayzhang-webapp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./tayzhang-webapp/src:/app/src:ro
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+
+  backend:
+    build:
+      context: ./tayzhang-py-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tayzhang-py-backend/app:/app/app:ro
+      - ./tayzhang-posts:/app/content:ro
+    environment:
+      - DEBUG=true
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost"]
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    ports:
+      - "5432:5432"
