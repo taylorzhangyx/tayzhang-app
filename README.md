@@ -24,7 +24,7 @@ cp .env.example .env
 # Edit .env with your values
 
 # Start development
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+make dev
 
 # Start production
 docker compose up -d
