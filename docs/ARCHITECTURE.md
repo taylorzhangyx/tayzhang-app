@@ -101,15 +101,19 @@ tayzhang-py-backend/
 tayzhang-webapp/
 ├── src/
 │   ├── app/                     # Next.js App Router
-│   │   ├── layout.tsx           # Root layout with Header
+│   │   ├── layout.tsx           # Root layout with Header/Footer
 │   │   ├── page.tsx             # Home page
-│   │   ├── posts/
-│   │   │   ├── page.tsx         # Posts list
-│   │   │   └── [slug]/page.tsx  # Single post (dynamic route)
+│   │   ├── about/
+│   │   │   └── page.tsx         # About page
+│   │   ├── writing/
+│   │   │   ├── page.tsx         # Writing list with search
+│   │   │   ├── WritingClient.tsx # Client-side search/filter
+│   │   │   └── [slug]/page.tsx  # Single post with related
 │   │   └── showcase/
 │   │       └── page.tsx         # App showcase
 │   ├── components/
 │   │   ├── Header.tsx           # Navigation component
+│   │   ├── Footer.tsx           # Footer with links
 │   │   └── PostCard.tsx         # Post preview card
 │   ├── lib/
 │   │   └── api.ts               # Backend API client
@@ -133,8 +137,10 @@ Header: X-API-Key: <api-key>
 | Endpoint | Auth | Rate Limit | Description |
 |----------|------|------------|-------------|
 | `GET /health` | None | None | Health check |
-| `GET /api/posts` | Required | 60/min | List all posts |
+| `GET /api/posts` | Required | 60/min | List posts (?q=search, ?tag=filter) |
 | `GET /api/posts/{slug}` | Required | 60/min | Get single post |
+| `GET /api/posts/tags` | Required | 60/min | List all tags |
+| `GET /api/posts/{slug}/related` | Required | 60/min | Get related posts |
 | `GET /docs` | None | None | Swagger UI |
 | `GET /redoc` | None | None | ReDoc UI |
 
@@ -204,13 +210,14 @@ The actual markdown content...
 ### Content Directory Structure
 
 ```
-tayzhang-posts/                  # Content repo (https://github.com/taylorzhangyx/tayzhang-posts)
+tayzhang-posts/                  # Content repo (folder-based)
 ├── posts/
-│   ├── my-first-post.md
-│   └── another-post.md
-├── images/
-│   └── post-images/
-└── metadata.json                # Optional: index/cache
+│   ├── YYYY-MM-DD-slug-name/
+│   │   ├── README.md            # Post content with frontmatter
+│   │   ├── img/                 # Local images
+│   │   └── audio/               # Audio files (future)
+│   └── ...
+└── README.md
 ```
 
 The content repo is mounted as a volume in Docker at `/app/content`.
@@ -339,7 +346,7 @@ cp .env.example .env
 # Edit .env with your values
 
 # Start services
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+make dev
 
 # Access
 # Frontend: http://localhost:3000
