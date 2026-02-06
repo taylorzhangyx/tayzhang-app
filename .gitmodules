@@ -1,0 +1,9 @@
+[submodule "tayzhang-py-backend"]
+	path = tayzhang-py-backend
+	url = https://github.com/taylorzhangyx/tayzhang-py-backend.git
+[submodule "tayzhang-webapp"]
+	path = tayzhang-webapp
+	url = https://github.com/taylorzhangyx/tayzhang-webapp.git
+[submodule "tayzhang-posts"]
+	path = tayzhang-posts
+	url = https://github.com/taylorzhangyx/tayzhang-posts.git
