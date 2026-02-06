@@ -2,10 +2,10 @@
 # Shortcuts for development, testing, and deployment
 
 .PHONY: help dev dev-frontend dev-backend build lint test test-frontend test-backend \
-        docker-up docker-down docker-logs docker-build docker-clean \
+        docker-up docker-down docker-logs logs docker-build docker-clean \
         db-migrate db-upgrade db-downgrade \
         install install-frontend install-backend \
-        commit commit-all push push-all pull pull-all status deploy clean
+        push push-all pull pull-all status deploy clean
 
 # Default target
 help:
@@ -34,6 +34,7 @@ help:
 	@echo "  docker-up       Start all services with docker"
 	@echo "  docker-down     Stop all services"
 	@echo "  docker-logs     Tail docker logs"
+	@echo "  logs            Alias for docker-logs"
 	@echo "  docker-build    Build docker images"
 	@echo "  docker-clean    Remove containers and volumes"
 	@echo ""
@@ -44,12 +45,10 @@ help:
 	@echo ""
 	@echo "Git:"
 	@echo "  status          Show git status of all repos"
-	@echo "  commit          Commit root repo only (use MSG=message)"
-	@echo "  commit-all      Commit all repos (use MSG=message)"
 	@echo "  push            Push root repo only"
-	@echo "  push-all        Push all repos (root + sub-repos)"
+	@echo "  push-all        Push all repos (root + submodules)"
 	@echo "  pull            Pull root repo only"
-	@echo "  pull-all        Pull all repos"
+	@echo "  pull-all        Pull all repos (root + submodules)"
 	@echo ""
 	@echo "Other:"
 	@echo "  deploy          Deploy to production"
@@ -89,8 +88,13 @@ lint-frontend:
 	cd tayzhang-webapp && npm run lint
 
 lint-backend:
-	cd tayzhang-py-backend && python -m py_compile app/main.py
-	@echo "Backend syntax check passed"
+	@cd tayzhang-py-backend && \
+	if command -v ruff >/dev/null 2>&1; then \
+		ruff check app/; \
+	else \
+		echo "Warning: ruff not installed, running basic syntax check only"; \
+		python -m py_compile app/main.py && echo "Backend syntax check passed"; \
+	fi
 
 # ============================================================================
 # Testing
@@ -99,7 +103,7 @@ lint-backend:
 test: test-frontend test-backend
 
 test-frontend:
-	cd tayzhang-webapp && npm test 2>/dev/null || echo "No tests configured for frontend yet"
+	@cd tayzhang-webapp && if [ -f "package.json" ] && grep -q '"test"' package.json; then npm test; else echo "No tests configured for frontend yet"; fi
 
 test-backend:
 	cd tayzhang-py-backend && pytest
@@ -116,6 +120,8 @@ docker-down:
 
 docker-logs:
 	docker compose logs -f
+
+logs: docker-logs
 
 docker-build:
 	docker compose build
@@ -143,36 +149,18 @@ db-downgrade:
 # Git
 # ============================================================================
 
-# Commit only root repo
-commit:
-ifndef MSG
-	$(error MSG is required. Usage: make commit MSG="commit message")
-endif
-	git add -A
-	git commit -m "$(MSG)"
-
-# Commit all repos (root + sub-repos)
-commit-all:
-ifndef MSG
-	$(error MSG is required. Usage: make commit-all MSG="commit message")
-endif
-	@echo "Committing tayzhang-webapp..."
-	cd tayzhang-webapp && git add -A && git commit -m "$(MSG)" || true
-	@echo "Committing tayzhang-py-backend..."
-	cd tayzhang-py-backend && git add -A && git commit -m "$(MSG)" || true
-	@echo "Committing root repo..."
-	git add -A && git commit -m "$(MSG)" || true
-
 # Push only root repo
 push:
 	git push
 
-# Push all repos (root + sub-repos)
+# Push all repos (root + submodules)
 push-all:
 	@echo "Pushing tayzhang-webapp..."
 	cd tayzhang-webapp && git push || true
 	@echo "Pushing tayzhang-py-backend..."
 	cd tayzhang-py-backend && git push || true
+	@echo "Pushing tayzhang-posts..."
+	cd tayzhang-posts && git push || true
 	@echo "Pushing root repo..."
 	git push
 
@@ -180,12 +168,14 @@ push-all:
 pull:
 	git pull
 
-# Pull all repos (root + sub-repos)
+# Pull all repos (root + submodules)
 pull-all:
 	@echo "Pulling tayzhang-webapp..."
 	cd tayzhang-webapp && git pull || true
 	@echo "Pulling tayzhang-py-backend..."
 	cd tayzhang-py-backend && git pull || true
+	@echo "Pulling tayzhang-posts..."
+	cd tayzhang-posts && git pull || true
 	@echo "Pulling root repo..."
 	git pull
 
@@ -199,6 +189,9 @@ status:
 	@echo ""
 	@echo "=== tayzhang-py-backend ==="
 	@cd tayzhang-py-backend && git status -s
+	@echo ""
+	@echo "=== tayzhang-posts ==="
+	@cd tayzhang-posts && git status -s
 
 # ============================================================================
 # Deployment & Cleanup
