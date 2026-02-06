@@ -9,14 +9,17 @@ services:
   frontend:
     build:
       context: ./tayzhang-webapp
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./tayzhang-webapp/src:/app/src:ro
+      - ./tayzhang-webapp/src:/app/src
+      - ./tayzhang-webapp/public:/app/public
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - INTERNAL_API_URL=http://backend:8000
+      - API_KEY=changeme-in-production
 
   backend:
     build:
