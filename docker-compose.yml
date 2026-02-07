@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:alpine
+    image: crpi-i0eeijcfbzq70n0b-vpc.cn-beijing.personal.cr.aliyuncs.com/taylorzyx/nginx:latest
     ports:
       - "80:80"
     volumes:
@@ -11,9 +11,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./tayzhang-webapp
-      dockerfile: Dockerfile
+    image: crpi-i0eeijcfbzq70n0b-vpc.cn-beijing.personal.cr.aliyuncs.com/taylorzyx/frontend:latest
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8000
       - API_KEY=${API_KEY}
@@ -22,9 +20,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: ./tayzhang-py-backend
-      dockerfile: Dockerfile
+    image: crpi-i0eeijcfbzq70n0b-vpc.cn-beijing.personal.cr.aliyuncs.com/taylorzyx/backend:latest
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@postgres:5432/tayzhang
       - CONTENT_REPO_PATH=/app/content
@@ -39,7 +35,7 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:16-alpine
+    image: crpi-i0eeijcfbzq70n0b-vpc.cn-beijing.personal.cr.aliyuncs.com/taylorzyx/postgres:latest
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
