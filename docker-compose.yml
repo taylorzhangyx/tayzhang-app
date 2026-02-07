@@ -28,7 +28,7 @@ services:
       - CORS_ORIGINS=["http://localhost:3000","http://frontend:3000"]
       - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-100}
     volumes:
-      - content_data:/app/content:ro
+      - ./tayzhang-posts:/app/content:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,4 +51,3 @@ services:
 
 volumes:
   postgres_data:
-  content_data:
