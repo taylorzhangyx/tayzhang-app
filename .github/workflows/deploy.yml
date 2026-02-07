@@ -11,6 +11,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: ali-cloud
     steps:
       - name: Checkout with submodules
         uses: actions/checkout@v4
@@ -50,6 +51,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    environment: ali-cloud
     steps:
       - name: Deploy to ECS via SSH
         uses: appleboy/ssh-action@v1
