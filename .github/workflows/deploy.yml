@@ -63,8 +63,10 @@ jobs:
             cd ${{ secrets.ECS_PROJECT_PATH }}
             git pull origin main
             git submodule update --init --recursive
+            sudo systemctl stop nginx 2>/dev/null || true
+            sudo systemctl disable nginx 2>/dev/null || true
             docker compose pull
-            docker compose up -d
+            docker compose up -d --force-recreate
             docker compose exec -T backend alembic upgrade head || true
             docker image prune -f
             sleep 5
