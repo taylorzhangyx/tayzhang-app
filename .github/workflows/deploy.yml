@@ -1,0 +1,69 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  ACR_REGISTRY: crpi-i0eeijcfbzq70n0b.cn-beijing.personal.cr.aliyuncs.com
+  ACR_NAMESPACE: taylorzyx
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Login to ACR
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login --username=${{ secrets.ACR_USERNAME }} --password-stdin ${{ env.ACR_REGISTRY }}
+
+      - name: Set image tag
+        run: echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build and push frontend
+        run: |
+          docker build -t $ACR_REGISTRY/$ACR_NAMESPACE/frontend:latest -t $ACR_REGISTRY/$ACR_NAMESPACE/frontend:$GIT_SHA ./tayzhang-webapp
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/frontend:latest
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/frontend:$GIT_SHA
+
+      - name: Build and push backend
+        run: |
+          docker build -t $ACR_REGISTRY/$ACR_NAMESPACE/backend:latest -t $ACR_REGISTRY/$ACR_NAMESPACE/backend:$GIT_SHA ./tayzhang-py-backend
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/backend:latest
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/backend:$GIT_SHA
+
+      - name: Build and push nginx
+        run: |
+          docker build -t $ACR_REGISTRY/$ACR_NAMESPACE/nginx:latest -t $ACR_REGISTRY/$ACR_NAMESPACE/nginx:$GIT_SHA ./nginx
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/nginx:latest
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/nginx:$GIT_SHA
+
+      - name: Build and push postgres
+        run: |
+          docker build -t $ACR_REGISTRY/$ACR_NAMESPACE/postgres:latest -t $ACR_REGISTRY/$ACR_NAMESPACE/postgres:$GIT_SHA ./postgres
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/postgres:latest
+          docker push $ACR_REGISTRY/$ACR_NAMESPACE/postgres:$GIT_SHA
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to ECS via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.ECS_PROJECT_PATH }}
+            git pull origin main
+            git submodule update --init --recursive
+            docker compose pull
+            docker compose up -d
+            docker compose exec -T backend alembic upgrade head || true
+            docker image prune -f
+            sleep 5
+            curl -f http://localhost/health || echo "Warning: Health check failed"
