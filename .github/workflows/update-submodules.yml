@@ -1,0 +1,35 @@
+name: Update Submodule
+
+on:
+  repository_dispatch:
+    types: [submodule-updated]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.PARENT_REPO_PAT }}
+
+      - name: Update submodule
+        run: |
+          SUBMODULE="${{ github.event.client_payload.submodule }}"
+          echo "Updating submodule: $SUBMODULE"
+          cd "$SUBMODULE"
+          git checkout main
+          git pull origin main
+          cd ..
+          git add "$SUBMODULE"
+
+      - name: Commit and push
+        run: |
+          SUBMODULE="${{ github.event.client_payload.submodule }}"
+          SHA="${{ github.event.client_payload.sha }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore: update $SUBMODULE submodule to ${SHA:0:7}"
+          git push origin main
