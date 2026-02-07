@@ -18,9 +18,10 @@ echo "Updating submodules..."
 git submodule update --init --recursive
 git submodule foreach git pull origin main
 
-# Build and restart services
-echo "Building and restarting services..."
-docker compose build
+# Pull latest images and restart services
+echo "Pulling latest images..."
+docker compose pull
+echo "Restarting services..."
 docker compose up -d
 
 # Clean up old images
