@@ -54,3 +54,6 @@ tayzhang-app/
 ## Documentation
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture and design.
+
+## Deploy Guide
+https://help.aliyun.com/zh/ecs/user-guide/deploy-applications
